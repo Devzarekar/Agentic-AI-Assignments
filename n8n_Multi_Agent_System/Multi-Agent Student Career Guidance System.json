@@ -1,0 +1,235 @@
+{
+  "name": "Multi-Agent Student Career Guidance System",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "2d65112b-409f-4dd5-892b-41477ad94619",
+      "name": "Student Chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        208
+      ],
+      "webhookId": "59c65905-b453-4534-91b9-db333ae8d873"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the Coordinator Agent of a Student Career Guidance System. You work with two specialist tools:\n- career_guidance_agent: recommends suitable career roles.\n- skills_analysis_agent: identifies technical skills, certifications and learning priorities.\n\nSteps:\n1. Read the student's message and the conversation history. Check whether you know their education (degree/field/year), interests, and career goals.\n2. If any of these is missing or unclear, do NOT call the specialists. Ask 2-3 short, friendly follow-up questions and stop.\n3. Otherwise, call career_guidance_agent first with a complete profile summary. Then call skills_analysis_agent with the same profile plus the recommended roles.\n4. If a specialist replies with \"MISSING INFO\", ask the student those questions instead of answering.\n5. Combine both results into ONE clear response using this structure:\n   ## Your Profile (1-2 lines)\n   ## Recommended Career Roles\n   ## Skills to Build\n   ## Certifications\n   ## Learning Priorities / Next Steps\n6. Keep language simple and encouraging. Never invent facts about the student. Do not mention the internal tools."
+        }
+      },
+      "id": "ae6dd55c-8855-4164-86bc-d6e0baf3cecd",
+      "name": "Coordinator Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        352,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "id": "b75f2dc0-00c2-4a27-9b94-19e4b329d679",
+      "name": "Gemini - Coordinator",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        432
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GjUAjYIQ0D0nC1t8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "eb051fb2-f2a5-43ec-ae7f-6332432757ff",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Career Guidance Agent. Recommends suitable career roles based on the student's education, interests, and goals. Pass a full summary of the student profile.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('student_profile', 'Summary of the student education, interests, goals and the question to answer') }}",
+        "options": {
+          "systemMessage": "You are the Career Guidance Agent, a friendly career counsellor for students.\n\nYour job: recommend 3 to 5 suitable career roles based on the student's education, interests, and goals.\n\nFor each role give: the role title, why it fits, typical entry path, and a rough demand outlook.\n\nRules:\n- Use only what the student profile says. Do not invent details about the student.\n- If education, interests, or goals are missing, do NOT guess. Reply with a short list of the follow-up questions needed, starting with \"MISSING INFO:\".\n- Keep the answer concise, in simple language, using bullet points."
+        }
+      },
+      "id": "e430301e-3cca-425e-be18-730625fec6b2",
+      "name": "career_guidance_agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        480,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "id": "334da8d2-1d22-4bc4-a9c0-96d45b01a7c0",
+      "name": "Gemini - Career Guidance",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        640
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GjUAjYIQ0D0nC1t8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Skills Analysis Agent. Identifies relevant technical skills, certifications, and learning priorities for the student's target field. Pass a full summary of the student profile and target roles.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('student_profile', 'Summary of the student education, current skills, goals and target roles') }}",
+        "options": {
+          "systemMessage": "You are the Skills Analysis Agent, a learning-path advisor for students.\n\nYour job: identify the relevant technical skills, recommended certifications, and a prioritised learning plan for the student's target field or roles.\n\nOutput three short sections:\n1. Key technical skills (mark each as Beginner / Intermediate / Advanced priority)\n2. Recommended certifications\n3. Learning priorities (what to learn first, second, third)\n\nRules:\n- Use only what the student profile says. Do not invent details about the student.\n- If the target field or current skill level is missing, do NOT guess. Reply with the follow-up questions needed, starting with \"MISSING INFO:\".\n- Keep the answer concise, in simple language, using bullet points."
+        }
+      },
+      "id": "d660cf4e-02b2-4e90-a835-f3189c23cae9",
+      "name": "skills_analysis_agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        608,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "id": "8b48de6d-8099-45d4-96d0-38dfb3d50150",
+      "name": "Gemini - Skills Analysis",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        640
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GjUAjYIQ0D0nC1t8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Student Chat": {
+      "main": [
+        [
+          {
+            "node": "Coordinator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Coordinator": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Coordinator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Coordinator Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "career_guidance_agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Coordinator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Career Guidance": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "career_guidance_agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "skills_analysis_agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Coordinator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Skills Analysis": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "skills_analysis_agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a8eb12ca-abac-4599-aad3-0d23f9150afb",
+  "meta": {
+    "instanceId": "7c5bc1b1461fff0ec0dd0f47af9c868d5b5071270e7b25784eb918b9800c913e"
+  },
+  "nodeGroups": [],
+  "id": "SJtpOzGeu3nMY5Gu",
+  "tags": []
+}
